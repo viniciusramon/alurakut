@@ -1,4 +1,6 @@
 import React from "react";
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
 import MainGrid from "../src/components/MainGrid"
 import Box from "../src/components/Box"
 import{AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet} from '../src/lib/AlurakutCommons';
@@ -42,7 +44,7 @@ function ProfileRelationsBox(propriedades){
           </ProfileRelationsBoxWrapper>
   )
 }
-export default function Home() {
+export default function Home(props) {
   const [comunidades, setComunidades] = React.useState([]);
  
   //const comunidades = comunidades[0];
@@ -50,7 +52,7 @@ export default function Home() {
   //const alteradorDeComunidades/setComunidades = comunidades[1];
   
   //console.log('Nosso Teste', comunidades);
-  const usuarioAleatorio = 'viniciusramon';
+  const usuarioAleatorio = props.githubUser;
   
   // const comunidades = ['Alurakut'];
   
@@ -120,7 +122,7 @@ const [seguidores, setSeguidores] = React.useState([]);
           <div className="welcomeArea" style={{gridArea: 'welcomeArea'}}>
             <Box>
               <h1 className='title'>
-                Bem Vindo(a)
+                Bem Vindo(a) Vinicius Ramon
                 </h1>
                 <OrkutNostalgicIconSet/>
                 </Box>
@@ -216,3 +218,85 @@ const [seguidores, setSeguidores] = React.useState([]);
     </>
     )
   }
+
+ /* export async function getServerSideProps(context) {
+    const cookies = nookies.get(context)
+    const token = cookies.USER_TOKEN;
+    
+   const {isAuthenticated} = await fetch('https://alurakut.vercel.app/api/auth', {
+      headers: {
+        Authorization: token
+      }
+    })
+    .then((resposta) => resposta.json())
+
+   // console.log('isAuthenticated', isAuthenticated);
+
+    if(!isAuthenticated){
+      return{
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        }
+      }
+    }
+
+    const { githubUser } = jwt.decode(token);
+
+
+    return {
+      props: {
+        githubUser
+      }, // will be passed to the page component as props
+    }
+  }*/
+
+  export async function getServerSideProps(context) {
+    const cookies = nookies.get(context)
+    const token = cookies.USER_TOKEN;
+    const { githubUser } = jwt.decode(token);
+
+    const isTrueUser = await fetch(`https://github.com/${githubUser}`)
+    .then(async function(resposta) {
+      if(resposta.status === 404) {
+        return false
+      }
+      else {
+        return true
+      }
+    })
+    
+    console.log(isTrueUser);
+
+    if(!isTrueUser) {
+      return {
+        redirect: {
+          destination: 'login',
+          permanent: false,
+        }
+      }
+    }
+    /*const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+      headers: {
+          Authorization: token
+        }
+    })*/
+    /*.then((resposta) => resposta.json())
+  
+    if(!isAuthenticated) {
+      return {
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        }
+      }
+    }
+  */
+
+    return {
+      props: {
+        githubUser: githubUser,
+        isAuthenticated: isTrueUser
+      }, // will be passed to the page component as props
+    }
+  } 
